@@ -449,6 +449,12 @@ const DOCKS: Record<ChatChannelId, ChannelDock> = {
       },
     },
   },
+  agithon: {
+    id: "agithon",
+    capabilities: {
+      chatTypes: ["direct"],
+    },
+  },
 };
 
 function buildDockFromPlugin(plugin: ChannelPlugin): ChannelDock {

@@ -1,0 +1,16 @@
+{
+  "id": "agithon-bridge",
+  "name": "Agithon",
+  "description": "Native bridge to local Agithon agent",
+  "version": "1.0.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "socketPath": {
+        "type": "string",
+        "default": "/run/user/1000/agithon.sock"
+      }
+    }
+  },
+  "channels": ["agithon"]
+}

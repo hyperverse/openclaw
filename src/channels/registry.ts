@@ -13,6 +13,7 @@ export const CHAT_CHANNEL_ORDER = [
   "slack",
   "signal",
   "imessage",
+  "agithon",
 ] as const;
 
 export type ChatChannelId = (typeof CHAT_CHANNEL_ORDER)[number];
@@ -108,6 +109,16 @@ const CHAT_CHANNEL_META: Record<ChatChannelId, ChannelMeta> = {
     docsLabel: "imessage",
     blurb: "this is still a work in progress.",
     systemImage: "message.fill",
+  },
+  agithon: {
+    id: "agithon",
+    label: "Agithon",
+    selectionLabel: "Agithon Bridge",
+    detailLabel: "Agithon Agent Bridge",
+    docsPath: "/channels/agithon",
+    docsLabel: "agithon",
+    blurb: "Bridge to a local Agithon agent for sub-agent execution.",
+    systemImage: "bolt.fill",
   },
 };
 

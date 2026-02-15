@@ -1,0 +1,8 @@
+plugins:
+  enabled:
+    - agithon
+  paths:
+    - "/home/debian/.openclaw/workspace-main/projects/openclaw/packages/agithon-bridge"
+channels:
+  agithon:
+    enabled: true
