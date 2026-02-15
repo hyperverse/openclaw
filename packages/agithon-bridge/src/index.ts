@@ -1,9 +1,9 @@
-import { createConnection } from "node:net";
 import type { OpenClawPluginApi, ChannelGatewayContext } from "openclaw/plugin-sdk";
-import { 
-    dispatchInboundMessageWithBufferedDispatcher,
-    loadConfig,
-    createTypingCallbacks
+import { createConnection } from "node:net";
+import {
+  dispatchInboundMessageWithBufferedDispatcher,
+  loadConfig,
+  createTypingCallbacks,
 } from "openclaw/plugin-sdk";
 
 const SOCKET_PATH = "/run/user/1000/agithon.sock";
@@ -37,20 +37,20 @@ export const register = (api: OpenClawPluginApi) => {
       describeAccount: () => ({ accountId: "default", configured: true, enabled: true }),
     },
     directory: {
-        listPeers: async () => [{ kind: "user", id: "agent", name: "Agithon Agent" }],
-        listGroups: async () => []
+      listPeers: async () => [{ kind: "user", id: "agent", name: "Agithon Agent" }],
+      listGroups: async () => [],
     },
     messaging: {
       targetResolver: {
         looksLikeId: (raw) => {
           return raw === "agent" || raw === "@agithon" || raw === "default";
-        }
-      }
+        },
+      },
     },
     gateway: {
       startAccount: async (ctx: ChannelGatewayContext) => {
         ctx.runtime.log("Starting Agithon gateway...");
-        
+
         const connect = () => {
           const socket = createConnection(SOCKET_PATH);
           clientSocket = socket;
@@ -64,23 +64,25 @@ export const register = (api: OpenClawPluginApi) => {
 
           socket.on("data", (chunk) => {
             const raw = chunk.toString();
-            console.log(`[AGITHON-BRIDGE] Raw data: ${raw.substring(0, 100)}`);
+            ctx.runtime.log(`[AGITHON-BRIDGE] Received: ${raw.substring(0, 200)}`);
             buffer += raw;
             const lines = buffer.split("\n");
-            if (!buffer.endsWith("\n")) {
-               buffer = lines.pop() ?? "";
+            if (buffer.endsWith("\n")) {
+              buffer = "";
             } else {
-               buffer = "";
+              buffer = lines.pop() ?? "";
             }
 
             for (const line of lines) {
-              if (!line.trim()) continue;
+              const trimmed = line.trim();
+              if (!trimmed) {
+                continue;
+              }
               try {
-                const msg = JSON.parse(line);
-                // Handle incoming events from Agithon
+                const msg = JSON.parse(trimmed);
                 void handleInbound(msg, ctx);
               } catch (e) {
-                ctx.runtime.error(`Agithon JSON error: ${e}`);
+                ctx.runtime.error(`Agithon JSON error: ${e} | Line: ${trimmed}`);
               }
             }
           });
@@ -102,7 +104,7 @@ export const register = (api: OpenClawPluginApi) => {
       stopAccount: async () => {
         clientSocket?.destroy();
         clientSocket = null;
-      }
+      },
     },
     outbound: {
       deliveryMode: "direct",
@@ -110,87 +112,102 @@ export const register = (api: OpenClawPluginApi) => {
         return { ok: true, to: params.to || "default" };
       },
       sendText: async (ctx) => {
-          if (!clientSocket || clientSocket.destroyed) {
-              return { delivered: false, error: "Socket not connected", channel: "agithon", messageId: undefined };
-          }
-          
-          const msg = {
-              role: "user",
-              content: ctx.text
+        console.log(`[AGITHON-BRIDGE] sendText called: ${ctx.text}`);
+        if (!clientSocket || clientSocket.destroyed) {
+          return {
+            delivered: false,
+            error: "Socket not connected",
+            channel: "agithon",
+            messageId: undefined,
           };
-          
-          clientSocket.write(JSON.stringify(msg) + "\n");
-          return { delivered: true, messageId: Date.now().toString(), channel: "agithon" };
+        }
+
+        const msg = {
+          role: "user",
+          content: ctx.text,
+        };
+
+        clientSocket.write(JSON.stringify(msg) + "\n");
+        return { delivered: true, messageId: Date.now().toString(), channel: "agithon" };
       },
       sendMedia: async (ctx) => {
-          if (!clientSocket || clientSocket.destroyed) {
-              return { delivered: false, error: "Socket not connected", channel: "agithon", messageId: undefined };
-          }
-          const msg = {
-              role: "user",
-              content: `[Media: ${ctx.mediaUrl}] ${ctx.text}`
+        if (!clientSocket || clientSocket.destroyed) {
+          return {
+            delivered: false,
+            error: "Socket not connected",
+            channel: "agithon",
+            messageId: undefined,
           };
-          clientSocket.write(JSON.stringify(msg) + "\n");
-          return { delivered: true, messageId: Date.now().toString(), channel: "agithon" };
-      }
-    }
+        }
+        const msg = {
+          role: "user",
+          content: `[Media: ${ctx.mediaUrl}] ${ctx.text}`,
+        };
+        clientSocket.write(JSON.stringify(msg) + "\n");
+        return { delivered: true, messageId: Date.now().toString(), channel: "agithon" };
+      },
+    },
   });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleInbound(evt: any, ctx: ChannelGatewayContext) {
-    let text = "";
-    if (evt.event === "TextDelta") {
-        text = evt.data.delta;
-    } else if (evt.role === "assistant") {
-        text = typeof evt.content === 'string' ? evt.content : JSON.stringify(evt.content);
-    } else {
-        return;
-    }
+  let text = "";
+  if (evt.event === "TextDelta") {
+    text = evt.data.delta;
+  } else if (evt.role === "assistant") {
+    text = typeof evt.content === "string" ? evt.content : JSON.stringify(evt.content);
+  } else {
+    return;
+  }
 
-    if (!text) return;
+  if (!text) {
+    return;
+  }
 
-    ctx.runtime.log(`Inbound from Agithon: ${text.substring(0, 50)}...`);
+  ctx.runtime.log(`Inbound from Agithon: ${text.substring(0, 50)}...`);
 
-    const cfg = loadConfig(); 
-    
-    const msgCtx = {
-        Body: text,
-        From: "agent", 
-        To: "openclaw",
-        OriginatingChannel: "agithon",
-        OriginatingTo: "default",
-        Provider: "agithon",
-        Surface: "agithon",
-        Timestamp: Date.now(),
-        ConversationLabel: "Agithon Bridge",
-        ChatType: "direct"
-    };
+  const cfg = loadConfig();
 
-    try {
-        await dispatchInboundMessageWithBufferedDispatcher({
-            // @ts-ignore
-            ctx: msgCtx,
-            cfg,
-            dispatcherOptions: {
-                deliver: async (payload) => {
-                    if (payload.text) {
-                        if (!clientSocket) return;
-                        const reply = { role: "user", content: payload.text };
-                        clientSocket.write(JSON.stringify(reply) + "\n");
-                    }
-                },
-                onSkip: () => {},
-                onError: (err) => {
-                    ctx.runtime.error(`Agithon dispatch error: ${err}`);
-                },
-                onReplyStart: createTypingCallbacks({
-                    start: async () => {},
-                    onStartError: () => {}
-                }).onReplyStart
+  const msgCtx = {
+    Body: text,
+    From: "agent",
+    To: "openclaw",
+    OriginatingChannel: "agithon",
+    OriginatingTo: "default",
+    Provider: "agithon",
+    Surface: "agithon",
+    Timestamp: Date.now(),
+    ConversationLabel: "Agithon Bridge",
+    ChatType: "direct",
+  };
+
+  try {
+    await dispatchInboundMessageWithBufferedDispatcher({
+      // @ts-ignore
+      ctx: msgCtx,
+      cfg,
+      dispatcherOptions: {
+        deliver: async (payload) => {
+          if (payload.text) {
+            if (!clientSocket) {
+              return;
             }
-        });
-    } catch (err) {
-        ctx.runtime.error(`Agithon top-level dispatch error: ${err}`);
-    }
+            const reply = { role: "user", content: payload.text };
+            clientSocket.write(JSON.stringify(reply) + "\n");
+          }
+        },
+        onSkip: () => {},
+        onError: (err) => {
+          ctx.runtime.error(`Agithon dispatch error: ${err}`);
+        },
+        onReplyStart: createTypingCallbacks({
+          start: async () => {},
+          onStartError: () => {},
+        }).onReplyStart,
+      },
+    });
+  } catch (err) {
+    ctx.runtime.error(`Agithon top-level dispatch error: ${err}`);
+  }
 }
