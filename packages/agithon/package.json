@@ -2,8 +2,8 @@
   "name": "openclaw-plugin-agithon",
   "version": "0.0.1",
   "type": "module",
-  "main": "dist/packages/agithon-bridge/src/index.js",
-  "types": "dist/packages/agithon-bridge/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsdown --watch"
