@@ -14,6 +14,7 @@ export const CHAT_CHANNEL_ORDER = [
   "signal",
   "imessage",
   "agithon",
+  "webchat",
 ] as const;
 
 export type ChatChannelId = (typeof CHAT_CHANNEL_ORDER)[number];
@@ -119,6 +120,16 @@ const CHAT_CHANNEL_META: Record<ChatChannelId, ChannelMeta> = {
     docsLabel: "agithon",
     blurb: "Bridge to a local Agithon agent for sub-agent execution.",
     systemImage: "bolt.fill",
+  },
+  webchat: {
+    id: "webchat",
+    label: "Webchat",
+    selectionLabel: "Internal Webchat",
+    detailLabel: "Internal Webchat",
+    docsPath: "/channels/webchat",
+    docsLabel: "webchat",
+    blurb: "The internal OpenClaw web interface.",
+    systemImage: "web.phi",
   },
 };
 

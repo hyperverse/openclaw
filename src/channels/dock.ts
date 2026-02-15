@@ -453,6 +453,14 @@ const DOCKS: Record<ChatChannelId, ChannelDock> = {
     id: "agithon",
     capabilities: {
       chatTypes: ["direct"],
+      nativeCommands: true,
+    },
+  },
+  webchat: {
+    id: "webchat",
+    capabilities: {
+      chatTypes: ["direct", "group"],
+      nativeCommands: true,
     },
   },
 };
