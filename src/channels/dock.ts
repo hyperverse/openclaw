@@ -450,6 +450,20 @@ const DOCKS: Record<ChatChannelId, ChannelDock> = {
         buildDirectOrGroupThreadToolContext({ context, hasRepliedRef }),
     },
   },
+  agithon: {
+    id: "agithon",
+    capabilities: {
+      chatTypes: ["direct"],
+      nativeCommands: true,
+    },
+  },
+  webchat: {
+    id: "webchat",
+    capabilities: {
+      chatTypes: ["direct", "group"],
+      nativeCommands: true,
+    },
+  },
 };
 
 function buildDockFromPlugin(plugin: ChannelPlugin): ChannelDock {

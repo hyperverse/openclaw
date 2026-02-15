@@ -441,3 +441,10 @@ export type { ProcessedLineMessage } from "../line/markdown-to-line.js";
 
 // Media utilities
 export { loadWebMedia, type WebMediaResult } from "../web/media.js";
+
+// Agithon Bridge Extension
+export { dispatchInboundMessageWithBufferedDispatcher } from "../auto-reply/dispatch.js";
+export { loadConfig } from "../config/config.js";
+export { resolveDefaultAgentId } from "../agents/agent-scope.js";
+
+

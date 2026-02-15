@@ -1,0 +1,28 @@
+{
+  "name": "openclaw-plugin-agithon",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsdown --watch"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.13",
+    "openclaw": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.7.2"
+  },
+  "openclaw": {
+    "channel": {
+      "id": "agithon",
+      "label": "Agithon",
+      "description": "Bridge to local Agithon agent via systemd service",
+      "selectionLabel": "Agithon Bridge"
+    }
+  }
+}
