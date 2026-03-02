@@ -314,9 +314,10 @@ export type MemorySearchConfig = {
     sessionMemory?: boolean;
   };
   /** Embedding provider mode. */
-  provider?: "openai" | "gemini" | "local" | "voyage" | "mistral";
+  provider?: "openai" | "gemini" | "local" | "voyage" | "mistral" | "google-vertex";
   remote?: {
     baseUrl?: string;
+    location?: string;
     apiKey?: string;
     headers?: Record<string, string>;
     batch?: {
@@ -333,7 +334,7 @@ export type MemorySearchConfig = {
     };
   };
   /** Fallback behavior when embeddings fail. */
-  fallback?: "openai" | "gemini" | "local" | "voyage" | "mistral" | "none";
+  fallback?: "openai" | "gemini" | "local" | "voyage" | "mistral" | "google-vertex" | "none";
   /** Embedding model id (remote) or alias (local). */
   model?: string;
   /** Local embedding settings (node-llama-cpp). */

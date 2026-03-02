@@ -98,7 +98,7 @@ export async function noteMemorySearchHealth(
   if (hasLocalEmbeddings(resolved.local)) {
     return;
   }
-  for (const provider of ["openai", "gemini", "voyage", "mistral"] as const) {
+  for (const provider of ["openai", "gemini", "voyage", "mistral", "google-vertex"] as const) {
     if (hasRemoteApiKey || (await hasApiKeyForProvider(provider, cfg, agentDir))) {
       return;
     }
@@ -124,7 +124,7 @@ export async function noteMemorySearchHealth(
       gatewayProbeWarning ? gatewayProbeWarning : null,
       "",
       "Fix (pick one):",
-      "- Set OPENAI_API_KEY, GEMINI_API_KEY, VOYAGE_API_KEY, or MISTRAL_API_KEY in your environment",
+      "- Set OPENAI_API_KEY, GEMINI_API_KEY, VOYAGE_API_KEY, MISTRAL_API_KEY, or GOOGLE_APPLICATION_CREDENTIALS / GOOGLE_CLOUD_PROJECT in your environment",
       `- Configure credentials: ${formatCliCommand("openclaw configure --section model")}`,
       `- For local embeddings: configure agents.defaults.memorySearch.provider and local model path`,
       `- To disable: ${formatCliCommand("openclaw config set agents.defaults.memorySearch.enabled false")}`,
@@ -155,7 +155,7 @@ function hasLocalEmbeddings(local: { modelPath?: string }): boolean {
 }
 
 async function hasApiKeyForProvider(
-  provider: "openai" | "gemini" | "voyage" | "mistral",
+  provider: "openai" | "gemini" | "voyage" | "mistral" | "google-vertex",
   cfg: OpenClawConfig,
   agentDir: string,
 ): Promise<boolean> {
@@ -177,6 +177,8 @@ function providerEnvVar(provider: string): string {
       return "GEMINI_API_KEY";
     case "voyage":
       return "VOYAGE_API_KEY";
+    case "google-vertex":
+      return "GOOGLE_APPLICATION_CREDENTIALS / GOOGLE_CLOUD_PROJECT";
     default:
       return `${provider.toUpperCase()}_API_KEY`;
   }

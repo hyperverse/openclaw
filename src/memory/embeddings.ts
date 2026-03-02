@@ -9,6 +9,7 @@ import {
   type MistralEmbeddingClient,
 } from "./embeddings-mistral.js";
 import { createOpenAiEmbeddingProvider, type OpenAiEmbeddingClient } from "./embeddings-openai.js";
+import { createVertexEmbeddingProvider, type VertexEmbeddingClient } from "./embeddings-vertex.js";
 import { createVoyageEmbeddingProvider, type VoyageEmbeddingClient } from "./embeddings-voyage.js";
 import { importNodeLlamaCpp } from "./node-llama.js";
 
@@ -24,6 +25,7 @@ function sanitizeAndNormalizeEmbedding(vec: number[]): number[] {
 export type { GeminiEmbeddingClient } from "./embeddings-gemini.js";
 export type { MistralEmbeddingClient } from "./embeddings-mistral.js";
 export type { OpenAiEmbeddingClient } from "./embeddings-openai.js";
+export type { VertexEmbeddingClient } from "./embeddings-vertex.js";
 export type { VoyageEmbeddingClient } from "./embeddings-voyage.js";
 
 export type EmbeddingProvider = {
@@ -34,11 +36,23 @@ export type EmbeddingProvider = {
   embedBatch: (texts: string[]) => Promise<number[][]>;
 };
 
-export type EmbeddingProviderId = "openai" | "local" | "gemini" | "voyage" | "mistral";
+export type EmbeddingProviderId =
+  | "openai"
+  | "local"
+  | "gemini"
+  | "voyage"
+  | "mistral"
+  | "google-vertex";
 export type EmbeddingProviderRequest = EmbeddingProviderId | "auto";
 export type EmbeddingProviderFallback = EmbeddingProviderId | "none";
 
-const REMOTE_EMBEDDING_PROVIDER_IDS = ["openai", "gemini", "voyage", "mistral"] as const;
+const REMOTE_EMBEDDING_PROVIDER_IDS = [
+  "openai",
+  "gemini",
+  "voyage",
+  "mistral",
+  "google-vertex",
+] as const;
 
 export type EmbeddingProviderResult = {
   provider: EmbeddingProvider | null;
@@ -48,6 +62,7 @@ export type EmbeddingProviderResult = {
   providerUnavailableReason?: string;
   openAi?: OpenAiEmbeddingClient;
   gemini?: GeminiEmbeddingClient;
+  vertex?: VertexEmbeddingClient;
   voyage?: VoyageEmbeddingClient;
   mistral?: MistralEmbeddingClient;
 };
@@ -58,6 +73,7 @@ export type EmbeddingProviderOptions = {
   provider: EmbeddingProviderRequest;
   remote?: {
     baseUrl?: string;
+    location?: string;
     apiKey?: string;
     headers?: Record<string, string>;
   };
@@ -90,7 +106,10 @@ function canAutoSelectLocal(options: EmbeddingProviderOptions): boolean {
 
 function isMissingApiKeyError(err: unknown): boolean {
   const message = formatErrorMessage(err);
-  return message.includes("No API key found for provider");
+  return (
+    message.includes("No API key found for provider") ||
+    message.includes("Missing credentials for provider")
+  );
 }
 
 async function createLocalEmbeddingProvider(
@@ -155,6 +174,10 @@ export async function createEmbeddingProvider(
     if (id === "gemini") {
       const { provider, client } = await createGeminiEmbeddingProvider(options);
       return { provider, gemini: client };
+    }
+    if (id === "google-vertex") {
+      const { provider, client } = await createVertexEmbeddingProvider(options);
+      return { provider, vertex: client };
     }
     if (id === "voyage") {
       const { provider, client } = await createVoyageEmbeddingProvider(options);

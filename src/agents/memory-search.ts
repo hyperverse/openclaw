@@ -9,9 +9,10 @@ export type ResolvedMemorySearchConfig = {
   enabled: boolean;
   sources: Array<"memory" | "sessions">;
   extraPaths: string[];
-  provider: "openai" | "local" | "gemini" | "voyage" | "mistral" | "auto";
+  provider: "openai" | "local" | "gemini" | "voyage" | "mistral" | "google-vertex" | "auto";
   remote?: {
     baseUrl?: string;
+    location?: string;
     apiKey?: string;
     headers?: Record<string, string>;
     batch?: {
@@ -25,7 +26,7 @@ export type ResolvedMemorySearchConfig = {
   experimental: {
     sessionMemory: boolean;
   };
-  fallback: "openai" | "gemini" | "local" | "voyage" | "mistral" | "none";
+  fallback: "openai" | "gemini" | "local" | "voyage" | "mistral" | "google-vertex" | "none";
   model: string;
   local: {
     modelPath?: string;
@@ -80,6 +81,7 @@ export type ResolvedMemorySearchConfig = {
 
 const DEFAULT_OPENAI_MODEL = "text-embedding-3-small";
 const DEFAULT_GEMINI_MODEL = "gemini-embedding-001";
+const DEFAULT_VERTEX_MODEL = "text-embedding-004";
 const DEFAULT_VOYAGE_MODEL = "voyage-4-large";
 const DEFAULT_MISTRAL_MODEL = "mistral-embed";
 const DEFAULT_CHUNK_TOKENS = 400;
@@ -143,9 +145,11 @@ function mergeConfig(
   const overrideRemote = overrides?.remote;
   const hasRemoteConfig = Boolean(
     overrideRemote?.baseUrl ||
+    overrideRemote?.location ||
     overrideRemote?.apiKey ||
     overrideRemote?.headers ||
     defaultRemote?.baseUrl ||
+    defaultRemote?.location ||
     defaultRemote?.apiKey ||
     defaultRemote?.headers,
   );
@@ -155,6 +159,7 @@ function mergeConfig(
     provider === "gemini" ||
     provider === "voyage" ||
     provider === "mistral" ||
+    provider === "google-vertex" ||
     provider === "auto";
   const batch = {
     enabled: overrideRemote?.batch?.enabled ?? defaultRemote?.batch?.enabled ?? false,
@@ -171,6 +176,7 @@ function mergeConfig(
   const remote = includeRemote
     ? {
         baseUrl: overrideRemote?.baseUrl ?? defaultRemote?.baseUrl,
+        location: overrideRemote?.location ?? defaultRemote?.location,
         apiKey: overrideRemote?.apiKey ?? defaultRemote?.apiKey,
         headers: overrideRemote?.headers ?? defaultRemote?.headers,
         batch,
@@ -186,7 +192,9 @@ function mergeConfig(
           ? DEFAULT_VOYAGE_MODEL
           : provider === "mistral"
             ? DEFAULT_MISTRAL_MODEL
-            : undefined;
+            : provider === "google-vertex"
+              ? DEFAULT_VERTEX_MODEL
+              : undefined;
   const model = overrides?.model ?? defaults?.model ?? modelDefault ?? "";
   const local = {
     modelPath: overrides?.local?.modelPath ?? defaults?.local?.modelPath,
